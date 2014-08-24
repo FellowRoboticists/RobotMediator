@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <EditTextPreference android:key="telep_host" android:title="Telep Host"/>
+    <EditTextPreference android:key="telep_port" android:title="Telep Port"/>
+    <EditTextPreference android:key="robot_name" android:title="Robot Name"/>
+    <EditTextPreference android:key="robot_key" android:title="Robot Key"/>
+    <EditTextPreference android:key="telep_key" android:title="Telep Key"/>
+    
+
+</PreferenceScreen>

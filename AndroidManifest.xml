@@ -28,6 +28,7 @@
                 <action android:name="com.naiveroboticist.robotmediator.ServerCommunicationService"/>
             </intent-filter>
         </service>
+        <activity android:name="SettingsActivity"></activity>
         </application>
     
 
