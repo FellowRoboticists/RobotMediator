@@ -1,12 +1,12 @@
 package com.naiveroboticist.robotmediator;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,40 +20,83 @@ public class ServerCommunicationService extends Service {
     private static final String TAG = ServerCommunicationService.class.getSimpleName();
     
     private Timer timer;
-    private boolean connected = false;
     private Socket socket = null;
+    private Thread commThread = null;
+    private boolean continueRunning = true;
+    
+    class CommunicationThread implements Runnable {
+        
+        private InetAddress address;
+        private int port;
+        
+        public CommunicationThread(InetAddress serverAddr, int serverPort) {
+            address = serverAddr;
+            port = serverPort;
+        }
+        
+        @Override
+        public void run() {
+            try {
+                Socket socket = new Socket(address, port);
+                InputStream input = socket.getInputStream();
+                PrintWriter output = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
+
+                byte[] byteBuffer = new byte[500];
+                int numBytes = input.read(byteBuffer);
+                String serverChallenge = new String(byteBuffer, 0, numBytes);
+                String message = Dsigner.verifyServerMessage(ServerCommunicationService.this, serverChallenge);
+                
+                if (message == null) {
+                    Log.i(TAG, "Server challenge had invalid signature");
+                    return;
+                }
+                
+                // Tell the server who we are
+                String robotMessage = "robot|" + MediatorSettings.robotName(ServerCommunicationService.this);
+                String signedRobotMessage = Dsigner.signRobotMessage(ServerCommunicationService.this, robotMessage);
+                Log.i(TAG, "The signed robot message: " + signedRobotMessage);
+                output.print(signedRobotMessage);
+                output.flush();
+                
+                // Now, wait until we stop the thread
+                while (continueRunning) {
+                    numBytes = input.read(byteBuffer);
+                    String commandMessage = new String(byteBuffer, 0, numBytes);
+                    if (commandMessage != null) {
+                        String command = Dsigner.verifyServerMessage(ServerCommunicationService.this, commandMessage);
+                        if (command != null) {
+                            Log.i(TAG, "Command from the server: " + command);
+                        } else {
+                            Log.e(TAG, "Invalid command from the server: " + command);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error doing socket junk", e);
+            } finally {
+                try { 
+                    socket.close(); 
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error closing socket", ex);
+                }
+            }
+            Log.i(TAG, "Client socket thread done.");
+        }
+        
+    }
     
     private TimerTask updateTask = new TimerTask() {
         @Override
         public void run() {
             Log.i(TAG, "Timer task doing work");
-            try {
-                InetAddress serverAddr = MediatorSettings.telepHost(ServerCommunicationService.this);
-                socket = new Socket(serverAddr, (int) MediatorSettings.telepPort(ServerCommunicationService.this));
-                connected = true;
-                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter pw = null;
-                String serverChallenge = reader.readLine();
-                Log.i(TAG, "Message from Server: " + serverChallenge);
-                // Verify that the message came from daneel...
-                String message = Dsigner.verifyServerMessage(ServerCommunicationService.this, serverChallenge);
-                if (message == null) {
-                    Log.i(TAG, "This was not a valid message");
-                } else {
-                    Log.i(TAG, "This was a valid message");
-                    String robotMessage = "robot|" + MediatorSettings.robotName(ServerCommunicationService.this);
-                    String signedRobotMessage = Dsigner.signRobotMessage(ServerCommunicationService.this, robotMessage);
-                    Log.i(TAG, "The signed robot message: " + signedRobotMessage);
-                    pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
-                    pw.println(signedRobotMessage);
+            if (commThread == null) {
+                try {
+                    commThread = new Thread(new CommunicationThread(MediatorSettings.telepHost(ServerCommunicationService.this),
+                                                         (int)MediatorSettings.telepPort(ServerCommunicationService.this)));
+                    commThread.start();
+                } catch (UnknownHostException e) {
+                    Log.e(TAG, "Error Firing up client socket thread", e);
                 }
-                String nextMessage = reader.readLine();
-                Log.i(TAG, "Response from server: " + nextMessage);
-                socket.close();
-                connected = false;
-            } catch (Exception ex) {
-                Log.e(TAG, "Error connecting to server", ex);
-                connected = false;
             }
         }
     };
@@ -70,6 +113,7 @@ public class ServerCommunicationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "Service shutting down connection to server");
+        continueRunning = false;
         
         timer.cancel();
         timer = null;
