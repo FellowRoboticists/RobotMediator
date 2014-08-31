@@ -1,7 +1,6 @@
 package com.naiveroboticist.robotmediator;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
@@ -15,21 +14,73 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.IBinder;
 import android.util.Log;
 
-public class IRobotCommunicationService extends Service {
+public class IRobotCommunicationService extends Service implements IRobotListener {
     private static final String TAG = IRobotCommunicationService.class.getSimpleName();
     
     private static final String ACTION_USB_PERMISSION = "com.naiveroboticist.USB_PERMISSION";
+    public static final String ACTION_COMMAND_TO_ROBOT = "com.naiveroboticist.COMMAND_TO_ROBOT";
+    public static final String COMMAND_NAME = "com.naiveroboticist.COMMAND_NAME";
+    
+    
+    private static final int STARTING_SPEED = 100; // mm/s
+    private static final int SPEED_INCREMENT = 10; // mm/s
 
     private PendingIntent mPendingIntent = null;
     private UsbSerialDriver mDriver = null;
     private UsbSerialPort mPort = null;
+    private RobotCommander commander = null;
+    private int mSpeed = STARTING_SPEED;
+    private String mLastMoveCommand = null;
+    
+    class UsbReaderThread implements Runnable {
+
+        @Override
+        public void run() {
+            while (commander != null) {
+                try {
+                    Thread.sleep(200); // Sleep for a 2/10's of a second
+                    commander.read();
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "UsbReaderThread interrupped", e);
+                } catch (IOException e) {
+                    Log.e(TAG, "Error reading data from USB", e);
+                    break;
+                }
+            }
+            
+        }
+        
+    }
+    
+    class BackupFromBump implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                robotCommand("stop");
+                robotCommand("backward");
+                Thread.sleep(1000);
+            } catch (IOException e) {
+                Log.e(TAG, "Error stopping and going backward on bump", e);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Error waiting for a second after bump", e);
+            } finally {
+                try {
+                    robotCommand("stop");
+                } catch (IOException e) {
+                    Log.e(TAG, "Unable to perform the final stop", e);
+                }
+            }
+        }
+        
+    }
+    
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 
         @Override
@@ -49,6 +100,24 @@ public class IRobotCommunicationService extends Service {
                         Log.d(TAG, "Permission denied for device" + device);
                     }
                 }
+            } 
+        }
+        
+    };
+    
+    // Handles receipt of commands from the Server service.
+    private final BroadcastReceiver mCommandReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ACTION_COMMAND_TO_ROBOT.equals(action)) {
+                String command = intent.getStringExtra(COMMAND_NAME);
+                try {
+                    robotCommand(command);
+                } catch (IOException e) {
+                    Log.e(TAG, "Error issuing robot command: " + command, e);
+                }
             }
         }
         
@@ -60,12 +129,17 @@ public class IRobotCommunicationService extends Service {
         
         // Register the broadcast receiver
         mPendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-        registerReceiver(mUsbReceiver, filter);
+        IntentFilter usbFilter = new IntentFilter(ACTION_USB_PERMISSION);
+        registerReceiver(mUsbReceiver, usbFilter);
+        
+        IntentFilter cmdFilter = new IntentFilter(ACTION_COMMAND_TO_ROBOT);
+        registerReceiver(mCommandReceiver, cmdFilter);
     }
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        mSpeed = STARTING_SPEED;
+        
         UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         
@@ -73,6 +147,54 @@ public class IRobotCommunicationService extends Service {
         manager.requestPermission(mDriver.getDevice(), mPendingIntent);
         
         return super.onStartCommand(intent, flags, startId);
+    }
+    
+    public void robotCommand(String command) throws IOException {
+        if (commander == null) {
+            return;
+        }
+        
+        switch (command) {
+        case "forward":
+            Log.i(TAG, "Robot should go forward");
+            commander.drive(mSpeed, 0);
+            mLastMoveCommand = command;
+            break;
+        case "backward":
+            Log.i(TAG, "Robot should go backward");
+            commander.drive(-mSpeed, 0);
+            break;
+        case "rotate_cw":
+            Log.i(TAG, "Robot should rotate clockwise");
+            commander.rotate(-mSpeed);
+            break;
+        case "rotate_ccw":
+            Log.i(TAG, "Robot should rotate counter-clockwise");
+            commander.rotate(mSpeed);
+            break;
+        case "speed_up":
+            Log.i(TAG, "Robot should speed up");
+            mSpeed += SPEED_INCREMENT;
+            if (mLastMoveCommand != null) {
+                robotCommand(mLastMoveCommand);
+            }
+            break;
+        case "slow_down":
+            Log.i(TAG, "Robot should slow down");
+            mSpeed -= SPEED_INCREMENT;
+            if (mLastMoveCommand != null) {
+                robotCommand(mLastMoveCommand);
+            }
+            break;
+        case "stop":
+            Log.i(TAG, "Robot should stop");
+            commander.stop();
+            mSpeed = STARTING_SPEED;
+            mLastMoveCommand = null;
+            break;
+        default:
+            Log.w(TAG, "Unknown command for robot: " + command);
+        }
     }
 
     /**
@@ -87,44 +209,23 @@ public class IRobotCommunicationService extends Service {
         
         UsbDeviceConnection connection = manager.openDevice(mDriver.getDevice());
         if (connection != null) {
-            // Write some data. Most have just one port (port 0)
             List<UsbSerialPort> ports = mDriver.getPorts();
-            int count = ports.size();
             mPort = ports.get(0);
-            byte buffer[] = new byte[1];
-            byte buffer4[] = new byte[4];
-            byte buffer5[] = new byte[5];
-            byte buffer2[] = new byte[2];
             try {
-                port.open(connection);
-                port.setParameters(57600, 8, 1, UsbSerialPort.PARITY_NONE);
-                buffer[0] = (byte) 0x80; // START
-                port.write(buffer, 100);
-                buffer[0] = (byte) 0x83; // SAFE
-                port.write(buffer, 100);
-                buffer5[0] = (byte) 0x8c; // Define a song
-                buffer5[1] = (byte) 0x00;
-                buffer5[2] = (byte) 0x01;
-                buffer5[3] = (byte) 72;
-                buffer5[4] = (byte) 10;
-                port.write(buffer5, 100);
-                buffer2[0] = (byte) 0x8d; // Play Song 0
-                buffer2[1] = (byte) 0x00;
-                port.write(buffer2, 100);
-                buffer4[0] = (byte) 0x8b; // Show green LED
-                buffer4[1] = (byte) 8;
-                buffer4[2] = (byte) 0;
-                buffer4[3] = (byte) 255;
-                port.write(buffer4, 100);
+                mPort.open(connection);
+                mPort.setParameters(57600, 8, 1, UsbSerialPort.PARITY_NONE);
+                commander = new RobotCommander(mPort, this);
+                
+                // Do the initialization thing with the robot to get
+                // us going....
+                commander.iRobotInitialize();
+                
+                // Start listening for stuff from the robot
+                new Thread(new UsbReaderThread()).start();
                 
             } catch (IOException ex) {
                 Log.e(TAG, "Error communicating with port", ex);
             } finally {
-                try {
-                    port.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "Error closing port");
-                }
             }
         } else {
             Log.w(TAG, "You probably need to call UsbManager.requestPermission(driver.getDevice(),... )");
@@ -133,7 +234,19 @@ public class IRobotCommunicationService extends Service {
 
     @Override
     public void onDestroy() {
-        // TODO Auto-generated method stub
+        if (commander != null) {
+            commander = null;
+        }
+        if (mPort != null) {
+            try {
+                mPort.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Error closing port");
+            }            
+        }
+        unregisterReceiver(mUsbReceiver);
+        unregisterReceiver(mCommandReceiver);
+        
         super.onDestroy();
     }
 
@@ -141,6 +254,24 @@ public class IRobotCommunicationService extends Service {
     public IBinder onBind(Intent arg0) {
         // TODO Auto-generated method stub
         return null;
+    }
+    
+    // For iRobotListener interface
+
+    @Override
+    public void hitBump(String name) {
+        Log.i(TAG, "Hit a bump on bumper: " + name);
+        new Thread(new BackupFromBump()).start();
+    }
+
+    @Override
+    public void bumpEnd(String name) {
+        Log.i(TAG, "Done with bump on bumper: " + name);
+    }
+
+    @Override
+    public void wheelDrop() {
+        Log.i(TAG, "Holy crap. The Wheels dropped out from under me!!");
     }
 
 }

@@ -23,14 +23,18 @@ public class RobotCommander {
     private static final byte[] PLAY_PAYLOAD = { 0x00 };
     private static final byte[] LED_PAYLOAD = { 0x08, 0x00, (byte) 0xff };
     private static final byte[] STREAM_PAYLOAD = { 0x03, 0x07, 0x13, 0x14 };
+    
+    private byte[] mReadBuffer = new byte[100];
 
     private UsbSerialPort mPort;
+    private IRobotReadHandler mReadHandler;
 
-    public RobotCommander(UsbSerialPort port) {
+    public RobotCommander(UsbSerialPort port, IRobotListener listener) {
         mPort = port;
+        mReadHandler = new IRobotReadHandler(listener);
     }
-
-    public void iRobotInitialize() throws IOException {
+    
+    public synchronized void iRobotInitialize() throws IOException {
         sendCommand(START);
         sendCommand(SAFE);
         sendCommand(SONG, SONG_PAYLOAD);
@@ -39,7 +43,7 @@ public class RobotCommander {
         sendCommand(LED, LED_PAYLOAD);
     }
     
-    void drive(int fwd, int rad) throws IOException {
+    public synchronized void drive(int fwd, int rad) throws IOException {
         sendCommand(SAFE);
         if (Math.abs(rad) < 0.0001) {
             rad = DRV_FWD_RAD;
@@ -48,23 +52,37 @@ public class RobotCommander {
         sendCommand(DRIVE, buffer);
     }
     
-    void rotate(int vel) throws IOException {
+    public synchronized void rotate(int vel) throws IOException {
         drive(vel, 1);
     }
     
-    public void sendCommand(byte command) throws IOException {
+    public synchronized void stop() throws IOException {
+        drive(0, 0);
+    }
+    
+    /**
+     * This method is going to read as much as it can, then report
+     * when it encounters something of interest.
+     * @throws IOException 
+     */
+    public synchronized void read() throws IOException {
+        int bytesRead = mPort.read(mReadBuffer, 100);
+        mReadHandler.bufferRead(mReadBuffer, bytesRead);
+    }
+    
+    private void sendCommand(byte command) throws IOException {
         byte[] buffer = { command };
         sendCommand(buffer);
     }
     
-    public void sendCommand(byte command, byte[] payload) throws IOException {
+    private void sendCommand(byte command, byte[] payload) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(payload.length + 1);
         buffer.put(command);
         buffer.put(payload);
         sendCommand(buffer.array());
     }
     
-    public void sendCommand(byte[] buffer) throws IOException {
+    private void sendCommand(byte[] buffer) throws IOException {
         mPort.write(buffer, 100);
     }
     

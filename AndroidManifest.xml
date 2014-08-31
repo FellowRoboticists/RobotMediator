@@ -38,6 +38,7 @@
         <service 
             android:label="IRobot Communication" 
             android:name=".IRobotCommunicationService" 
+            android:process=":remote"
             android:exported="false">
             <intent-filter>
                 <action 
