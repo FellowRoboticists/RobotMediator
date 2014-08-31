@@ -7,5 +7,6 @@
     <string name="mediation_interface_toggle">Mediation Interface</string>
     <string name="mediation_verify_signature">Verify Signature</string>
     <string name="mediation_create_signature">Create Signature</string>
+    <string name="btn_start_usb">Start USB</string>
 
 </resources>

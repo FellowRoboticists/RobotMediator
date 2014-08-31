@@ -43,6 +43,11 @@ public class MediationActivity extends ActionBarActivity {
             Log.e(TAG, "Error verifying server message", e);
         }
 	}
+	
+	public void onClickStartUSB(View view) {
+	    // Try to start the USB stuff
+	    startService(new Intent(IRobotCommunicationService.class.getName()));
+	}
 		
 	public void onToggleActivation(View view) {
 	    // Is the toggle on?

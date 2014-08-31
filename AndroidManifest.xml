@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="12"
         android:targetSdkVersion="15" />
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -23,12 +23,38 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:label="Server Communication" android:name=".ServerCommunicationService" android:process=":remote">
+        <activity 
+            android:name="SettingsActivity"></activity>
+        <service 
+            android:label="Server Communication" 
+            android:name=".ServerCommunicationService" 
+            android:process=":remote"
+            android:exported="false">
             <intent-filter>
-                <action android:name="com.naiveroboticist.robotmediator.ServerCommunicationService"/>
+                <action 
+                    android:name="com.naiveroboticist.robotmediator.ServerCommunicationService"/>
             </intent-filter>
         </service>
-        <activity android:name="SettingsActivity"></activity>
+        <service 
+            android:label="IRobot Communication" 
+            android:name=".IRobotCommunicationService" 
+            android:exported="false">
+            <intent-filter>
+                <action 
+                    android:name="com.naiveroboticist.robotmediator.IRobotCommunicationService"/>
+            </intent-filter>
+            
+            <meta-data 
+                android:name="com.naiveroboticist.robotmediator.IRobotCommunicationService" 
+      			android:resource="@xml/device_filter" />
+            <intent-filter>
+                <action 
+                    android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
+            </intent-filter>
+            <meta-data 
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" 
+      			android:resource="@xml/device_filter" /> 
+        </service>
         </application>
     
 
