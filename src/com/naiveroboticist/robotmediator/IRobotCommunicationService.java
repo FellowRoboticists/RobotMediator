@@ -29,6 +29,7 @@ public class IRobotCommunicationService extends Service {
 
     private PendingIntent mPendingIntent = null;
     private UsbSerialDriver mDriver = null;
+    private UsbSerialPort mPort = null;
     private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 
         @Override
@@ -89,7 +90,7 @@ public class IRobotCommunicationService extends Service {
             // Write some data. Most have just one port (port 0)
             List<UsbSerialPort> ports = mDriver.getPorts();
             int count = ports.size();
-            UsbSerialPort port = ports.get(0);
+            mPort = ports.get(0);
             byte buffer[] = new byte[1];
             byte buffer4[] = new byte[4];
             byte buffer5[] = new byte[5];
