@@ -44,8 +44,12 @@ public class IRobotCommunicationService extends Service implements IRobotListene
         public void run() {
             while (commander != null) {
                 try {
-                    Thread.sleep(200); // Sleep for a 2/10's of a second
-                    commander.read();
+                    Thread.sleep(100); // Sleep for a 1/10's of a second
+                    if (commander != null && mPort != null) {
+                        commander.read();
+                    } else {
+                        break; // We're done
+                    }
                 } catch (InterruptedException e) {
                     Log.e(TAG, "UsbReaderThread interrupped", e);
                 } catch (IOException e) {
@@ -182,6 +186,9 @@ public class IRobotCommunicationService extends Service implements IRobotListene
         case "slow_down":
             Log.i(TAG, "Robot should slow down");
             mSpeed -= SPEED_INCREMENT;
+            if (mSpeed < 0) {
+                mSpeed = SPEED_INCREMENT;
+            }
             if (mLastMoveCommand != null) {
                 robotCommand(mLastMoveCommand);
             }

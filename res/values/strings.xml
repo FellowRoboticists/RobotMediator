@@ -8,5 +8,6 @@
     <string name="mediation_verify_signature">Verify Signature</string>
     <string name="mediation_create_signature">Create Signature</string>
     <string name="btn_start_usb">Start USB</string>
+    <string name="mediation_instruction_text">Use the toggle button below to turn the Robot Connection On/Off.</string>
 
 </resources>

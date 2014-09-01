@@ -82,6 +82,9 @@ public class IRobotReadHandler {
         if ((sum & (byte) 0xff) != 0) {
             // Checksum didn't match
             Log.e(TAG, "Checksum didn't match for packet");
+            // Might as well clear it; it is full of badness if
+            // the checksum is bad anyway.
+            mCurrentPacket.clear();
             return;
         }
         
@@ -131,6 +134,7 @@ public class IRobotReadHandler {
             value -= 65536;
         }
         mDistance += value;
+        Log.d(TAG, "Distance travelled is: " + mDistance);
     }
     
     private void processAngle() {
@@ -139,6 +143,7 @@ public class IRobotReadHandler {
             value -= 65536;
         }
         mAngle += value;
+        Log.d(TAG, "Angle: " + mAngle);
 
     }
     
