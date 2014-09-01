@@ -97,11 +97,10 @@ public class IRobotCommunicationService extends Service implements IRobotListene
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if (device != null) {
                             // Call method to set up device communication
-                            Log.d(TAG, "We should now have permission to write to the device");
                             setUpTheDevice(device);
                         }
                     } else {
-                        Log.d(TAG, "Permission denied for device" + device);
+                        Log.i(TAG, "Permission denied for device" + device);
                     }
                 }
             } 
@@ -160,31 +159,25 @@ public class IRobotCommunicationService extends Service implements IRobotListene
         
         switch (command) {
         case "forward":
-            Log.i(TAG, "Robot should go forward");
             commander.drive(mSpeed, 0);
             mLastMoveCommand = command;
             break;
         case "backward":
-            Log.i(TAG, "Robot should go backward");
             commander.drive(-mSpeed, 0);
             break;
         case "rotate_cw":
-            Log.i(TAG, "Robot should rotate clockwise");
             commander.rotate(-mSpeed);
             break;
         case "rotate_ccw":
-            Log.i(TAG, "Robot should rotate counter-clockwise");
             commander.rotate(mSpeed);
             break;
         case "speed_up":
-            Log.i(TAG, "Robot should speed up");
             mSpeed += SPEED_INCREMENT;
             if (mLastMoveCommand != null) {
                 robotCommand(mLastMoveCommand);
             }
             break;
         case "slow_down":
-            Log.i(TAG, "Robot should slow down");
             mSpeed -= SPEED_INCREMENT;
             if (mSpeed < 0) {
                 mSpeed = SPEED_INCREMENT;
@@ -194,10 +187,13 @@ public class IRobotCommunicationService extends Service implements IRobotListene
             }
             break;
         case "stop":
-            Log.i(TAG, "Robot should stop");
             commander.stop();
             mSpeed = STARTING_SPEED;
             mLastMoveCommand = null;
+            break;
+        case "noop":
+            // This is the heartbeat from the server after a certain
+            // amount of inactivity. Just ignore it.
             break;
         default:
             Log.w(TAG, "Unknown command for robot: " + command);
@@ -232,8 +228,7 @@ public class IRobotCommunicationService extends Service implements IRobotListene
                 
             } catch (IOException ex) {
                 Log.e(TAG, "Error communicating with port", ex);
-            } finally {
-            }
+            } 
         } else {
             Log.w(TAG, "You probably need to call UsbManager.requestPermission(driver.getDevice(),... )");
         }
@@ -259,7 +254,7 @@ public class IRobotCommunicationService extends Service implements IRobotListene
 
     @Override
     public IBinder onBind(Intent arg0) {
-        // TODO Auto-generated method stub
+        // Nothing to see here. Move along.
         return null;
     }
     
@@ -267,18 +262,19 @@ public class IRobotCommunicationService extends Service implements IRobotListene
 
     @Override
     public void hitBump(String name) {
-        Log.i(TAG, "Hit a bump on bumper: " + name);
         new Thread(new BackupFromBump()).start();
     }
 
     @Override
     public void bumpEnd(String name) {
-        Log.i(TAG, "Done with bump on bumper: " + name);
+        // If you want to do something when the bump sensor
+        // has been released, put it here.
     }
 
     @Override
     public void wheelDrop() {
-        Log.i(TAG, "Holy crap. The Wheels dropped out from under me!!");
+        // If you want to do something when the wheels drop,
+        // put it here.
     }
 
 }

@@ -5,10 +5,10 @@ import java.util.StringTokenizer;
 
 import android.content.Context;
 import android.util.Base64;
-import android.util.Log;
 
 public class Dsigner {
     
+    @SuppressWarnings("unused")
     private static final String TAG = Dsigner.class.getSimpleName();
     
     public static String verifyServerMessage(Context context, String signedMessage) throws Exception {
@@ -27,7 +27,6 @@ public class Dsigner {
         s.update(message.getBytes());
 
         valid = s.verify(msgSignature);
-        Log.i(TAG, "Signature valid? " + valid);
 
         return (valid) ? message : null;
     }

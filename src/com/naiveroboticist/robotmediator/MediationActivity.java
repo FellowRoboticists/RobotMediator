@@ -3,14 +3,14 @@ package com.naiveroboticist.robotmediator;
 import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ToggleButton;
 
 public class MediationActivity extends ActionBarActivity {
-	private static final String TAG = MediationActivity.class.getSimpleName();
+	@SuppressWarnings("unused")
+    private static final String TAG = MediationActivity.class.getSimpleName();
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -24,11 +24,9 @@ public class MediationActivity extends ActionBarActivity {
 	    boolean on = ((ToggleButton) view).isChecked();
 	    
 	    if (on) {
-			Log.i(TAG, "Activation button clicked and is now ON");
 			startService(new Intent(ServerCommunicationService.class.getName()));
 	        startService(new Intent(IRobotCommunicationService.class.getName()));
 	    } else {
-			Log.i(TAG, "Activation button clicked and is now OFF");
             stopService(new Intent(IRobotCommunicationService.class.getName()));
 			stopService(new Intent(ServerCommunicationService.class.getName()));
 	    }

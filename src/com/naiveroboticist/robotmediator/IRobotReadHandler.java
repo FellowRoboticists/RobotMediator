@@ -2,9 +2,9 @@ package com.naiveroboticist.robotmediator;
 
 import java.nio.ByteBuffer;
 
-import android.util.Log;
 
 public class IRobotReadHandler {
+    @SuppressWarnings("unused")
     private static final String TAG = IRobotReadHandler.class.getSimpleName();
     
     private static final int PACKET_LENGTH = 256;
@@ -13,11 +13,14 @@ public class IRobotReadHandler {
         
     // Sensor Values
     private static final byte BUMP_WDROP = 0x07;
-//    private static final byte WALL = 0x08;
-//    private static final byte BUTTONS = 0x12;
+    @SuppressWarnings("unused")
+    private static final byte WALL = 0x08;
+    @SuppressWarnings("unused")
+    private static final byte BUTTONS = 0x12;
     private static final byte DISTANCE = 0x13;
     private static final byte ANGLE = 0x14;
-//    private static final byte VOLTAGE = 0x16;
+    @SuppressWarnings("unused")
+    private static final byte VOLTAGE = 0x16;
     
     private IRobotListener mListener;
     private ByteBuffer mCurrentPacket = ByteBuffer.allocate(PACKET_LENGTH);
@@ -81,7 +84,6 @@ public class IRobotReadHandler {
         }
         if ((sum & (byte) 0xff) != 0) {
             // Checksum didn't match
-            Log.e(TAG, "Checksum didn't match for packet");
             // Might as well clear it; it is full of badness if
             // the checksum is bad anyway.
             mCurrentPacket.clear();
@@ -102,7 +104,7 @@ public class IRobotReadHandler {
                 processAngle();
                 break;
             default:
-                Log.i(TAG, "Unhandled packet type");
+                // Unhandled packet type
                 mCurrentPacket.position(mCurrentPacket.limit()); // Avoid infinite loop
             }
         }
@@ -126,6 +128,9 @@ public class IRobotReadHandler {
             }
         }
         mLastData = data;
+
+        // Eat the checksum value at the end of the packet
+        mCurrentPacket.get();
     }
     
     private void processDistance() {
@@ -134,7 +139,9 @@ public class IRobotReadHandler {
             value -= 65536;
         }
         mDistance += value;
-        Log.d(TAG, "Distance travelled is: " + mDistance);
+        
+        // Eat the checksum value at the end of the packet
+        mCurrentPacket.get();
     }
     
     private void processAngle() {
@@ -143,7 +150,9 @@ public class IRobotReadHandler {
             value -= 65536;
         }
         mAngle += value;
-        Log.d(TAG, "Angle: " + mAngle);
+        
+        // Eat the checksum value at the end of the packet
+        mCurrentPacket.get();
 
     }
     

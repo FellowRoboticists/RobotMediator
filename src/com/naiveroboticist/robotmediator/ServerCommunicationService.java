@@ -47,14 +47,13 @@ public class ServerCommunicationService extends Service {
                 String message = Dsigner.verifyServerMessage(ServerCommunicationService.this, serverChallenge);
                 
                 if (message == null) {
-                    Log.i(TAG, "Server challenge had invalid signature");
+                    Log.e(TAG, "Server challenge had invalid signature");
                     return;
                 }
                 
                 // Tell the server who we are
                 String robotMessage = "robot|" + MediatorSettings.robotName(ServerCommunicationService.this);
                 String signedRobotMessage = Dsigner.signRobotMessage(ServerCommunicationService.this, robotMessage);
-                Log.i(TAG, "The signed robot message: " + signedRobotMessage);
                 output.print(signedRobotMessage);
                 output.flush();
                 
@@ -65,7 +64,6 @@ public class ServerCommunicationService extends Service {
                     if (commandMessage != null) {
                         String command = Dsigner.verifyServerMessage(ServerCommunicationService.this, commandMessage);
                         if (command != null) {
-                            Log.i(TAG, "Command from the server: " + command);
                             Intent intent = new Intent(IRobotCommunicationService.ACTION_COMMAND_TO_ROBOT);
                             intent.putExtra(IRobotCommunicationService.COMMAND_NAME, command);
                             sendBroadcast(intent);
@@ -93,7 +91,6 @@ public class ServerCommunicationService extends Service {
     private TimerTask updateTask = new TimerTask() {
         @Override
         public void run() {
-            Log.i(TAG, "Timer task doing work");
             if (commThread == null) {
                 try {
                     commThread = new Thread(new CommunicationThread(MediatorSettings.telepHost(ServerCommunicationService.this),
@@ -109,21 +106,13 @@ public class ServerCommunicationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "Attempting to communicate with the server");
         timer = new Timer("ServerCommunicationTimer");
         timer.schedule(updateTask, 1000L, 60 * 1000L);
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // TODO Auto-generated method stub
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(TAG, "Service shutting down connection to server");
         continueRunning = false;
         
         timer.cancel();
@@ -132,7 +121,7 @@ public class ServerCommunicationService extends Service {
 
     @Override
     public IBinder onBind(Intent arg0) {
-        // TODO Auto-generated method stub
+        // Nothing to see here. Move along.
         return null;
     }
 
