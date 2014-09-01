@@ -3,7 +3,7 @@ RobotMediator
 
 RobotMediator is an Android application that allows an iRobot Create
 to be controlled over the internet from an Android device that has
-an internet connection and a USB output connector.
+an internet connection and a USB connector.
 
 The application activity couldn't be simpler; there is a single 
 toggle-button on the screen to connection/disconnect the application
@@ -34,7 +34,9 @@ The USB/Serial driver code (see package com.hoho.android.usbserial) is an extrac
 the GitHub Project https://github.com/mik3y/usb-serial-for-android. This project was
 implemented using gradle and I had no interest in understanding how to build the 
 project using gradle. However, I want to make sure I credit mik3y for that code. That
-is the reason my project uses the GNU LESSER GENERAL PUBLIC LICENSE.
+is the reason my project uses the GNU LESSER GENERAL PUBLIC LICENSE. In the long run
+I plan to leverage the original project that mik3y put together; sorry, I was in a 
+hurry to get this thing working.
 
 Although the code works as-is, this is a work in progress. There is no telling at this
 point where the project will go.
