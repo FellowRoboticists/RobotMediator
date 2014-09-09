@@ -49,6 +49,30 @@ public class MediatorSettings {
         return Long.parseLong(portString);
     }
     
+    public static int defaultSpeed(Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String defaultSpeed = sharedPref.getString("default_speed", "100");
+        
+        return Integer.parseInt(defaultSpeed);
+    }
+    
+    public static int speedIncrement(Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String speedIncrement = sharedPref.getString("speed_increment", "100");
+        
+        return Integer.parseInt(speedIncrement);
+    }
+    
+    public static int rotationSpeed(Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String rotationSpeed = sharedPref.getString("rotation_speed", "100");
+        
+        return Integer.parseInt(rotationSpeed);
+    }
+    
     private static PrivateKey getPrivateKey(String thePrivateKey) throws Exception {
         PrivateKey privateKey = null;
         String pvtKey = thePrivateKey.replaceAll("(-+BEGIN RSA PRIVATE KEY-+\\r?\\n|-+END RSA PRIVATE KEY-+\\r?\\n?)", "");

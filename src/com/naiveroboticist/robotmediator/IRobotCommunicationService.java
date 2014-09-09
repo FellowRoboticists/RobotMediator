@@ -28,8 +28,9 @@ public class IRobotCommunicationService extends Service implements IRobotListene
     public static final String COMMAND_NAME = "com.naiveroboticist.COMMAND_NAME";
     
     
-    private static final int STARTING_SPEED = 100; // mm/s
-    private static final int SPEED_INCREMENT = 10; // mm/s
+    private static int STARTING_SPEED = 100; // mm/s
+    private static int SPEED_INCREMENT = 10; // mm/s
+    private static int ROTATION_SPEED = 100; // mm/s
 
     private PendingIntent mPendingIntent = null;
     private UsbSerialDriver mDriver = null;
@@ -141,6 +142,12 @@ public class IRobotCommunicationService extends Service implements IRobotListene
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // When we start the process, make sure we set the 
+        // speed from the preferences
+        STARTING_SPEED = MediatorSettings.defaultSpeed(this);
+        SPEED_INCREMENT = MediatorSettings.speedIncrement(this);
+        ROTATION_SPEED = MediatorSettings.rotationSpeed(this);
+        
         mSpeed = STARTING_SPEED;
         
         UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
@@ -166,10 +173,10 @@ public class IRobotCommunicationService extends Service implements IRobotListene
             commander.drive(-mSpeed, 0);
             break;
         case "rotate_cw":
-            commander.rotate(-mSpeed);
+            commander.rotate(-ROTATION_SPEED);
             break;
         case "rotate_ccw":
-            commander.rotate(mSpeed);
+            commander.rotate(ROTATION_SPEED);
             break;
         case "speed_up":
             mSpeed += SPEED_INCREMENT;
