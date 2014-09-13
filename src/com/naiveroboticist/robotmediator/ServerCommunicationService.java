@@ -64,9 +64,7 @@ public class ServerCommunicationService extends Service {
                     if (commandMessage != null) {
                         String command = Dsigner.verifyServerMessage(ServerCommunicationService.this, commandMessage);
                         if (command != null) {
-                            Intent intent = new Intent(IRobotCommunicationService.ACTION_COMMAND_TO_ROBOT);
-                            intent.putExtra(IRobotCommunicationService.COMMAND_NAME, command);
-                            sendBroadcast(intent);
+                            broadcastRobotCommand(command);
                         } else {
                             Log.e(TAG, "Invalid command from the server: " + command);
                         }
@@ -75,6 +73,14 @@ public class ServerCommunicationService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Error doing socket junk", e);
             } finally {
+                /*
+                 * When the server connection is gone - either through normal
+                 * stoppage or an error, we really want the robot to stop. So
+                 * before we do anything else, let's stop the robot from doing
+                 * anything else.
+                 */
+                broadcastRobotCommand("stop");
+                
                 try { 
                     if (socket != null) {
                         socket.close();
@@ -84,8 +90,16 @@ public class ServerCommunicationService extends Service {
                 }
             }
             Log.i(TAG, "Client socket thread done.");
+            
+            commThread = null;
         }
         
+    }
+    
+    private void broadcastRobotCommand(String command) {
+        Intent intent = new Intent(IRobotCommunicationService.ACTION_COMMAND_TO_ROBOT);
+        intent.putExtra(IRobotCommunicationService.COMMAND_NAME, command);
+        sendBroadcast(intent);
     }
     
     private TimerTask updateTask = new TimerTask() {
@@ -107,16 +121,18 @@ public class ServerCommunicationService extends Service {
     public void onCreate() {
         super.onCreate();
         timer = new Timer("ServerCommunicationTimer");
-        timer.schedule(updateTask, 1000L, 60 * 1000L);
+        timer.schedule(updateTask, 1000L, 10 * 1000L);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        continueRunning = false;
         
         timer.cancel();
         timer = null;
+
+        continueRunning = false;
+        
     }
 
     @Override
