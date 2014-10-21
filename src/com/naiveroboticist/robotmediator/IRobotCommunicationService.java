@@ -163,28 +163,21 @@ public class IRobotCommunicationService extends Service implements IRobotListene
         if (commander == null) {
             return;
         }
-        
-        switch (command) {
-        case "forward":
+        if (command.equals("forward")) {
             commander.drive(mSpeed, 0);
             mLastMoveCommand = command;
-            break;
-        case "backward":
+        } else if (command.equals("backward")) {
             commander.drive(-mSpeed, 0);
-            break;
-        case "rotate_cw":
+        } else if (command.equals("rotate_cw")) {
             commander.rotate(-ROTATION_SPEED);
-            break;
-        case "rotate_ccw":
+        } else if (command.equals("rotate_ccw")) {
             commander.rotate(ROTATION_SPEED);
-            break;
-        case "speed_up":
+        } else if (command.equals("speed_up")) {
             mSpeed += SPEED_INCREMENT;
             if (mLastMoveCommand != null) {
                 robotCommand(mLastMoveCommand);
             }
-            break;
-        case "slow_down":
+        } else if (command.equals("slow_down")) {
             mSpeed -= SPEED_INCREMENT;
             if (mSpeed < 0) {
                 mSpeed = SPEED_INCREMENT;
@@ -192,17 +185,14 @@ public class IRobotCommunicationService extends Service implements IRobotListene
             if (mLastMoveCommand != null) {
                 robotCommand(mLastMoveCommand);
             }
-            break;
-        case "stop":
+        } else if (command.equals("stop")) {
             commander.stop();
             mSpeed = STARTING_SPEED;
             mLastMoveCommand = null;
-            break;
-        case "noop":
+        } else if (command.equals("noop")) {
             // This is the heartbeat from the server after a certain
             // amount of inactivity. Just ignore it.
-            break;
-        default:
+        } else {
             Log.w(TAG, "Unknown command for robot: " + command);
         }
     }

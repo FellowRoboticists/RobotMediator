@@ -75,7 +75,7 @@ public class MediatorSettings {
     
     private static PrivateKey getPrivateKey(String thePrivateKey) throws Exception {
         PrivateKey privateKey = null;
-        String pvtKey = thePrivateKey.replaceAll("(-+BEGIN RSA PRIVATE KEY-+\\r?\\n|-+END RSA PRIVATE KEY-+\\r?\\n?)", "");
+        String pvtKey = thePrivateKey.replaceAll("(-+BEGIN PRIVATE KEY-+\\r?\\n|-+END PRIVATE KEY-+\\r?\\n?)", "");
         
     
         byte[] keyBytes = Base64.decode(pvtKey, Base64.DEFAULT);
