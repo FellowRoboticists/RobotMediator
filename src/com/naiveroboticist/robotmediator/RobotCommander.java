@@ -15,13 +15,26 @@ public class RobotCommander {
     private static final byte PLAY    = (byte) 0x8d;
     private static final byte STREAM  = (byte) 0x94;
     
+    // LED values
+    private static final byte LED_ADVANCE = 0x08;
+    @SuppressWarnings("unused")
+    private static final byte LED_PLAY = 0x02;
+    
+    private static final byte LED_GREEN = 0x00;
+    @SuppressWarnings("unused")
+    private static final byte LED_RED = (byte) 0xff;
+    
+    @SuppressWarnings("unused")
+    private static final byte LED_OFF = 0x00;
+    private static final byte LED_FULL_INTENSITY = (byte) 0xff;
+    
     // Drive straight
     private static final int DRV_FWD_RAD = 0x7fff;
     
     // Standard payloads
     private static final byte[] SONG_PAYLOAD = { 0x00, 0x01, 0x48, 0xa };
     private static final byte[] PLAY_PAYLOAD = { 0x00 };
-    private static final byte[] LED_PAYLOAD = { 0x08, 0x00, (byte) 0xff };
+    private static final byte[] LED_PAYLOAD = { LED_ADVANCE, LED_GREEN, LED_FULL_INTENSITY };
     private static final byte[] STREAM_PAYLOAD = { 0x03, 0x07, 0x13, 0x14 };
     
     private byte[] mReadBuffer = new byte[100];
@@ -44,6 +57,12 @@ public class RobotCommander {
     }
     
     public synchronized void drive(int fwd, int rad) throws IOException {
+        // We send the safe command prior to the actual drive commands
+        // because it's possible that we might be in something other 
+        // than SAFE mode. For example; if the cliff-detection fired, 
+        // that throws the create into 'passive' mode after stopping 
+        // all actuators so we can't start moving until we go back into
+        // 'safe' mode.
         sendCommand(SAFE);
         if (Math.abs(rad) < 0.0001) {
             rad = DRV_FWD_RAD;
