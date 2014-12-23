@@ -8,6 +8,12 @@
         android:minSdkVersion="12"
         android:targetSdkVersion="15" />
 
+    <uses-library android:name="android.test.runner" />
+
+    <instrumentation android:name="android.test.InstrumentationTestRunner"
+	        android:targetPackage="com.naiveroboticist.robotmediator"
+		    android:label="State tests" />
+
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="true"
