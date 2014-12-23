@@ -20,7 +20,7 @@ import android.hardware.usb.UsbManager;
 import android.os.IBinder;
 import android.util.Log;
 
-public class IRobotCommunicationService extends Service implements IRobotListener {
+public class IRobotCommunicationService extends Service implements IRobotListener, IDeviceSetup {
     private static final String TAG = IRobotCommunicationService.class.getSimpleName();
     
     private static final String ACTION_USB_PERMISSION = "com.naiveroboticist.USB_PERMISSION";
@@ -85,29 +85,8 @@ public class IRobotCommunicationService extends Service implements IRobotListene
         }
         
     }
-    
-    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (ACTION_USB_PERMISSION.equals(action)) {
-                synchronized (this) {
-                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                    
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        if (device != null) {
-                            // Call method to set up device communication
-                            setUpTheDevice(device);
-                        }
-                    } else {
-                        Log.i(TAG, "Permission denied for device" + device);
-                    }
-                }
-            } 
-        }
-        
-    };
+    private final USBBroadcastReceiver mUsbReceiver = new USBBroadcastReceiver(this);
     
     // Handles receipt of commands from the Server service.
     private final BroadcastReceiver mCommandReceiver = new BroadcastReceiver() {
@@ -272,6 +251,12 @@ public class IRobotCommunicationService extends Service implements IRobotListene
     public void wheelDrop() {
         // If you want to do something when the wheels drop,
         // put it here.
+    }
+
+    @Override
+    public void deviceSetupError(String message) {
+        // TODO Auto-generated method stub
+        
     }
 
 }
