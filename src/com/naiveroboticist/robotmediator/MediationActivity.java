@@ -8,6 +8,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ToggleButton;
 
+/**
+ * An Android Activity that supports the single page of the
+ * IRobotMediator application.
+ * 
+ * @author dsieh
+ *
+ */
 public class MediationActivity extends ActionBarActivity {
 	@SuppressWarnings("unused")
     private static final String TAG = MediationActivity.class.getSimpleName();
@@ -18,9 +25,14 @@ public class MediationActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_mediation);
 		
 	}
-	
+
+	/**
+	 * Called when the toggle button on the view is tapped. Start/stop the
+	 * services.
+	 * 
+	 * @param view
+	 */
 	public void onToggleActivation(View view) {
-	    // Is the toggle on?
 	    boolean on = ((ToggleButton) view).isChecked();
 	    
 	    if (on) {

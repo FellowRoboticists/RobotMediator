@@ -15,6 +15,13 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+/**
+ * An Android Service to maintain communication with the telep server to
+ * register and to receive commands for the iRobot Create.
+ * 
+ * @author dsieh
+ *
+ */
 public class ServerCommunicationService extends Service {
 
     private static final String TAG = ServerCommunicationService.class.getSimpleName();
@@ -23,11 +30,25 @@ public class ServerCommunicationService extends Service {
     private Thread commThread = null;
     private boolean continueRunning = true;
     
+    /**
+     * This runnable sets up the communication with the telep server,
+     * registers the robot and waits on the socket for commands for
+     * the robot.
+     * 
+     * @author dsieh
+     *
+     */
     class CommunicationThread implements Runnable {
         
         private InetAddress address;
         private int port;
         
+        /**
+         * Constructs a new CommunicationThread.
+         * 
+         * @param serverAddr the address of the server
+         * @param serverPort the port the server is listening on.
+         */
         public CommunicationThread(InetAddress serverAddr, int serverPort) {
             address = serverAddr;
             port = serverPort;
@@ -96,12 +117,22 @@ public class ServerCommunicationService extends Service {
         
     }
     
+    /**
+     * This private method sends the command to the IRobotCommunicationService.
+     * 
+     * @param command the command to send to the service.
+     */
     private void broadcastRobotCommand(String command) {
         Intent intent = new Intent(IRobotCommunicationService.ACTION_COMMAND_TO_ROBOT);
-        intent.putExtra(IRobotCommunicationService.COMMAND_NAME, command);
+        intent.putExtra(IRobotBroadcastReceiver.COMMAND_NAME, command);
         sendBroadcast(intent);
     }
-    
+     
+    /**
+     * A runnable to continue attempting to connect to the telep server
+     * as long as the commThread is null. We use this in case we lose
+     * internet connection.
+     */
     private TimerTask updateTask = new TimerTask() {
         @Override
         public void run() {

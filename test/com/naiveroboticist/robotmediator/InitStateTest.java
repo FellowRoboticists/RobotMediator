@@ -9,8 +9,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BackwardStateTest {
-    private BackwardState mCut;
+public class InitStateTest {
+    
+    private InitState mCut;
     private IRobotCommand mIssuedCommand;
     
     class TestICommand implements ICommand {
@@ -24,23 +25,29 @@ public class BackwardStateTest {
 
     @Before
     public void setUp() throws Exception {
-        
-        mCut = new BackwardState(new TestICommand());
+        mCut = new InitState(new TestICommand());
     }
 
     @After
     public void tearDown() throws Exception {
-        
         mCut = null;
         mIssuedCommand = null;
+    }
+
+    @Test
+    public void testStartCommand() throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, IOException {
+        BaseState st = mCut.command("start");
+        assertNotNull(st);
+        assertTrue(st instanceof StopState);
+        assertTrue(mIssuedCommand instanceof StartCommand);
     }
 
     @Test
     public void testStopCommand() throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, IOException {
         BaseState st = mCut.command("stop");
         assertNotNull(st);
-        assertTrue(st instanceof StopState);
-        assertTrue(mIssuedCommand instanceof StopCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
 
     @Test
@@ -48,8 +55,8 @@ public class BackwardStateTest {
         BaseState st = mCut.command("forward");
         
         assertNotNull(st);
-        assertTrue(st instanceof ForwardState);
-        assertTrue(mIssuedCommand instanceof ForwardCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
 
     @Test
@@ -57,7 +64,7 @@ public class BackwardStateTest {
         BaseState st = mCut.command("backward");
         
         assertNotNull(st);
-        assertTrue(st instanceof BackwardState);
+        assertTrue(st instanceof InitState);
         assertNull(mIssuedCommand);
     }
     
@@ -66,8 +73,8 @@ public class BackwardStateTest {
         BaseState st = mCut.command("rotate_cw");
         
         assertNotNull(st);
-        assertTrue(st instanceof RotateCwState);
-        assertTrue(mIssuedCommand instanceof RotateCwCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
     
     @Test
@@ -75,8 +82,8 @@ public class BackwardStateTest {
         BaseState st = mCut.command("rotate_ccw");
         
         assertNotNull(st);
-        assertTrue(st instanceof RotateCcwState);
-        assertTrue(mIssuedCommand instanceof RotateCcwCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
     
     @Test
@@ -84,8 +91,8 @@ public class BackwardStateTest {
         BaseState st = mCut.command("speed_up");
         
         assertNotNull(st);
-        assertTrue(st instanceof BackwardState);
-        assertTrue(mIssuedCommand instanceof SpeedUpCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
     
     @Test
@@ -93,16 +100,16 @@ public class BackwardStateTest {
         BaseState st = mCut.command("slow_down");
         
         assertNotNull(st);
-        assertTrue(st instanceof BackwardState);
-        assertTrue(mIssuedCommand instanceof SlowDownCommand);
+        assertTrue(st instanceof InitState);
+        assertNull(mIssuedCommand);
     }
-
+    
     @Test
     public void testBumpCommand() throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException, IOException {
         BaseState st = mCut.command("bump");
         
         assertNotNull(st);
-        assertTrue(st instanceof BackwardState);
+        assertTrue(st instanceof InitState);
         assertNull(mIssuedCommand);
     }
 
@@ -111,8 +118,7 @@ public class BackwardStateTest {
         BaseState st = mCut.command("proximity");
         
         assertNotNull(st);
-        assertTrue(st instanceof BackwardState);
+        assertTrue(st instanceof InitState);
         assertNull(mIssuedCommand);
     }
-
 }

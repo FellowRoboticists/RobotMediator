@@ -1,11 +1,19 @@
 package com.naiveroboticist.robotmediator;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.naiveroboticist.interfaces.IRobotMotion;
+import com.naiveroboticist.utils.ByteMethods;
 
-public class RobotCommander {
+/**
+ * This class provides the high-level implementation of the commands supported
+ * by the iRobot Create.
+ * 
+ * @author dsieh
+ *
+ */
+public class IRobotCreateCommander extends IRobotCreateWriter implements IRobotMotion {
     // Supported commands
     private static final byte START   = (byte) 0x80;
     private static final byte SAFE    = (byte) 0x83;
@@ -35,18 +43,22 @@ public class RobotCommander {
     private static final byte[] SONG_PAYLOAD = { 0x00, 0x01, 0x48, 0xa };
     private static final byte[] PLAY_PAYLOAD = { 0x00 };
     private static final byte[] LED_PAYLOAD = { LED_ADVANCE, LED_GREEN, LED_FULL_INTENSITY };
-    private static final byte[] STREAM_PAYLOAD = { 0x03, 0x07, 0x13, 0x14 };
+    private static final byte[] STREAM_PAYLOAD = { 0x02, 0x07, 0x21 };
     
-    private byte[] mReadBuffer = new byte[100];
-
-    private UsbSerialPort mPort;
-    private IRobotReadHandler mReadHandler;
-
-    public RobotCommander(UsbSerialPort port, IRobotListener listener) {
-        mPort = port;
-        mReadHandler = new IRobotReadHandler(listener);
+    /**
+     * Constructs a new commander.
+     * 
+     * @param port the USB/Serial port to which the iRobot Create is connected.
+     */
+    public IRobotCreateCommander(UsbSerialPort port) {
+        super(port);
     }
     
+    /**
+     * Initialize the iRobot Create. Prepare it for action.
+     *  
+     * @throws IOException
+     */
     public synchronized void iRobotInitialize() throws IOException {
         sendCommand(START);
         sendCommand(SAFE);
@@ -55,7 +67,14 @@ public class RobotCommander {
         sendCommand(STREAM, STREAM_PAYLOAD);
         sendCommand(LED, LED_PAYLOAD);
     }
-    
+
+    /**
+     * Tells the iRobot Create to drive.
+     * 
+     * @param fwd the velocity at which to move. Negative values mean to
+     * go backwards.
+     * @param rad the angle in which to drive in radians.
+     */
     public synchronized void drive(int fwd, int rad) throws IOException {
         // We send the safe command prior to the actual drive commands
         // because it's possible that we might be in something other 
@@ -67,50 +86,35 @@ public class RobotCommander {
         if (Math.abs(rad) < 0.0001) {
             rad = DRV_FWD_RAD;
         }
-        byte[] buffer = { uB(fwd), lB(fwd), uB(rad), lB(rad) };
+        byte[] buffer = { 
+                ByteMethods.uB(fwd), 
+                ByteMethods.lB(fwd), 
+                ByteMethods.uB(rad), 
+                ByteMethods.lB(rad) 
+                };
         sendCommand(DRIVE, buffer);
     }
     
+    /**
+     * Tells the iRobot Create to pivot at a particular speed.
+     * 
+     * @param vel the velocity at which to pivot. Negative values
+     * indicate a clockwise rotation.
+     */
     public synchronized void rotate(int vel) throws IOException {
         drive(vel, 1);
     }
     
+    /**
+     * Tells the iRobot Create to stop moving.
+     */
     public synchronized void stop() throws IOException {
         drive(0, 0);
     }
-    
-    /**
-     * This method is going to read as much as it can, then report
-     * when it encounters something of interest.
-     * @throws IOException 
-     */
-    public synchronized void read() throws IOException {
-        int bytesRead = mPort.read(mReadBuffer, 100);
-        mReadHandler.bufferRead(mReadBuffer, bytesRead);
-    }
-    
-    private void sendCommand(byte command) throws IOException {
-        byte[] buffer = { command };
-        sendCommand(buffer);
-    }
-    
-    private void sendCommand(byte command, byte[] payload) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(payload.length + 1);
-        buffer.put(command);
-        buffer.put(payload);
-        sendCommand(buffer.array());
-    }
-    
-    private void sendCommand(byte[] buffer) throws IOException {
-        mPort.write(buffer, 100);
-    }
-    
-    private byte uB(int word) {
-        return (byte) (word >> 8);
-    }
-    
-    private byte lB(int word) {
-        return (byte) (word & 0x000000ff);
-    }
 
+    @Override
+    public void initialize() throws IOException {
+        iRobotInitialize();
+    }
+    
 }

@@ -1,5 +1,11 @@
 package com.naiveroboticist.robotmediator;
 
+/**
+ * Defines the state in which the iRobot Create is moving backwards.
+ * 
+ * @author dsieh
+ *
+ */
 public class BackwardState extends BaseState {
 
     // "stop", "noop" not supported.

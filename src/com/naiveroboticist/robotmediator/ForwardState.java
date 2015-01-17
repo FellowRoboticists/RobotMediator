@@ -1,5 +1,12 @@
 package com.naiveroboticist.robotmediator;
 
+/**
+ * Defines the state when the iRobot Create is currently
+ * moving forward.
+ * 
+ * @author dsieh
+ *
+ */
 public class ForwardState extends BaseState {
 
     // "stop", "noop" not supported.

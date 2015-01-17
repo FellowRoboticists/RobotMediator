@@ -1,5 +1,13 @@
 package com.naiveroboticist.robotmediator;
 
+/**
+ * This is the state of the iRobot Create where it is
+ * doing pretty much nothing (except reading sensor
+ * values).
+ * 
+ * @author dsieh
+ *
+ */
 public class StopState extends BaseState {
     
     // "stop", "noop" not supported.

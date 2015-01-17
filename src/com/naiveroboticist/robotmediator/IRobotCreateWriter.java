@@ -4,12 +4,23 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.naiveroboticist.interfaces.RobotReaderWriter;
+import com.naiveroboticist.interfaces.IRobotWriter;
 
-public class IRobotCreateReaderWriter implements RobotReaderWriter {
+/**
+ * An abstraction used to handle the raw writing to the iRobot Create.
+ * 
+ * @author dsieh
+ *
+ */
+public class IRobotCreateWriter implements IRobotWriter {
     private UsbSerialPort mPort;
     
-    public IRobotCreateReaderWriter(UsbSerialPort port) {
+    /**
+     * Constructs a new IRobotCreateWriter instance.
+     * 
+     * @param port the USB/Serial port.
+     */
+    public IRobotCreateWriter(UsbSerialPort port) {
         mPort = port;
     }
 
@@ -32,8 +43,4 @@ public class IRobotCreateReaderWriter implements RobotReaderWriter {
         mPort.write(buffer, 100);
     }
 
-    @Override
-    public int read(byte[] buffer, int timeoutMillis) throws IOException {
-        return mPort.read(buffer, timeoutMillis);
-    }
 }

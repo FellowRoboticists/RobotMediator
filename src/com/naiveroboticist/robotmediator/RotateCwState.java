@@ -1,5 +1,12 @@
 package com.naiveroboticist.robotmediator;
 
+/**
+ * The state of the iRobot Create when it is rotating in a
+ * clockwise direction.
+ * 
+ * @author dsieh
+ *
+ */
 public class RotateCwState extends BaseState {
 
     // "stop", "noop" not supported.
