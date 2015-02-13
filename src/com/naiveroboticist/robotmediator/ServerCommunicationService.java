@@ -152,15 +152,43 @@ public class ServerCommunicationService extends Service {
     public void onCreate() {
         super.onCreate();
         timer = new Timer("ServerCommunicationTimer");
-        timer.schedule(updateTask, 1000L, 10 * 1000L);
+        // timer.schedule(updateTask, 1000L, 10 * 1000L);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // If this flag isn't set, we'll only go through the loop
+        // once. C'mon man.
+        continueRunning = true;
+        
+        if (timer != null) {
+            timer.schedule(updateTask, 1000L, 10 * 1000L);
+        }
+        
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        // Stop the timer from running
+        if (timer != null) {
+            timer.cancel();
+        }
+        
+        // We want to stop the thread from running.
+        continueRunning = false;
+        
+        return super.onUnbind(intent);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         
-        timer.cancel();
-        timer = null;
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
 
         continueRunning = false;
         
