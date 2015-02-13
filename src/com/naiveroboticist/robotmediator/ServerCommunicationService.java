@@ -177,6 +177,7 @@ public class ServerCommunicationService extends Service {
         
         // We want to stop the thread from running.
         continueRunning = false;
+        commThread = null;
         
         return super.onUnbind(intent);
     }
